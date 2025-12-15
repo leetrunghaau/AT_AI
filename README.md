@@ -1,142 +1,196 @@
-# Hệ thống Nhận dạng Khuôn mặt
+# Face Recognition API
 
-Đây là một dự án API nhận dạng khuôn mặt sử dụng mô hình **AuraFace-v1**. API được xây dựng bằng FastAPI và sử dụng Faiss để tìm kiếm vector hiệu suất cao.
+[![Python Version](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Chức năng
+A high-performance, scalable, and production-ready face recognition API built with FastAPI, ONNX, and Faiss.
 
-- **Đăng ký (`/register`)**: Đăng ký một người dùng mới bằng cách cung cấp một hoặc nhiều hình ảnh và `user_id`. Hệ thống sẽ trích xuất các vector đặc trưng khuôn mặt, tính giá trị trung bình và lưu vào cơ sở dữ liệu.
-- **Nhận dạng (`/recognize`)**: Tìm kiếm một khuôn mặt trong cơ sở dữ liệu. Hệ thống sẽ trả về `user_id` và khoảng cách (mức độ tương đồng) nếu tìm thấy.
+## Overview
 
-## Cấu trúc dự án
+This project provides a robust API for face recognition tasks. It allows you to register users with one or more images and then recognize them from new images. The system is designed for efficiency, using the lightweight **AuraFace-v1** model for feature extraction and **Faiss** for rapid similarity searches in the vector database.
 
-```
-.
-├── align/         # Chứa code để căn chỉnh khuôn mặt
-├── database/      # Quản lý cơ sở dữ liệu vector Faiss
-├── embeddings/    # Trích xuất vector đặc trưng từ khuôn mặt
-├── models/        # Chứa các file của mô hình ONNX
-├── face_service.py # File chính, định nghĩa các API endpoint
-├── service.py     # Lớp logic nghiệp vụ chính
-└── README.md
-```
+## Key Technologies
 
-## Hướng dẫn cài đặt
+- **Backend Framework**: FastAPI
+- **Deep Learning Model**: AuraFace-v1 (via ONNX Runtime)
+- **Vector Database**: Faiss (Facebook AI Similarity Search)
+- **Async Server**: Uvicorn
+- **Containerization**: Docker & Docker Compose
 
-### 1. Tải mô hình
+## Features
 
-Mô hình nhận dạng khuôn mặt **AuraFace-v1** không được bao gồm trong repository này do kích thước lớn. Bạn cần tải nó về thủ công.
+- **User Registration**: Register a `user_id` by averaging feature embeddings from multiple images.
+- **Face Recognition**: Identify a user from a new image, returning their `user_id` and a similarity score.
+- **Efficient Search**: Utilizes Faiss for near-instantaneous lookups even with millions of vectors.
+- **Scalable**: Built with modern async Python and container-ready for easy scaling.
 
-- **Nguồn**: [https://huggingface.co/fal/AuraFace-v1/tree/main](https://huggingface.co/fal/AuraFace-v1/tree/main)
-- **Tải xuống**: Tải tất cả các file `.onnx` từ link trên.
-- **Lưu trữ**: Tạo thư mục `models/AuraFace-v1/` và đặt các file đã tải vào đó. Cấu trúc cuối cùng sẽ trông như sau:
-  ```
-  models/
-  └── AuraFace-v1/
-      ├── 1k3d68.onnx
-      ├── 2d106det.onnx
-      ├── genderage.onnx
-      ├── glintr100.onnx
-      └── scrfd_10g_bnkps.onnx
-  ```
+---
 
-### 2. Cài đặt thư viện Python
+## Getting Started
 
-Dự án yêu cầu các thư viện Python sau. Bạn nên tạo một môi trường ảo (virtual environment) để quản lý chúng.
+### Prerequisites
 
-Tạo và lưu các thư viện sau vào file `requirements.txt`:
-```txt
-fastapi
-uvicorn[standard]
-python-multipart
-opencv-python
-numpy
-faiss-cpu
-onnxruntime
-```
+- Git
+- Python 3.10+
+- Docker & Docker Compose (Recommended for deployment)
 
-Sau đó, cài đặt bằng pip:
+### 1. Clone the Repository
+
 ```bash
+git clone https://github.com/leetrunghaau/AT_AI.git
+cd AT_AI
+```
+
+### 2. Download the Model
+
+The **AuraFace-v1** model is not included in this repository. You must download it manually from Hugging Face.
+
+- **Source**: [AuraFace-v1 on Hugging Face](https://huggingface.co/fal/AuraFace-v1/tree/main)
+- **Action**: Create a `models/AuraFace-v1/` directory and place all downloaded `.onnx` files inside.
+
+### 3. Install Dependencies
+
+It is highly recommended to use a Python virtual environment.
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 pip install -r requirements.txt
 ```
-*Lưu ý: `faiss-cpu` dành cho máy chỉ có CPU. Nếu bạn có GPU và CUDA được cài đặt, bạn có thể cài `faiss-gpu` để có hiệu suất tốt hơn.*
 
-### 3. Chạy ứng dụng
+---
 
-Sử dụng uvicorn để khởi động server API:
+## Configuration
+
+For a production environment, it is recommended to configure the application using environment variables.
+
+| Variable               | Description                                       | Default                             |
+| ---------------------- | ------------------------------------------------- | ----------------------------------- |
+| `ARCFACE_MODEL_PATH`   | Path to the ONNX face embedding model.            | `models/AuraFace-v1/glintr100.onnx` |
+| `FACE_DB_INDEX_PATH`   | Path to save the Faiss index file.                | `face.index`                        |
+| `FACE_DB_IDS_PATH`     | Path to save the user IDs JSON file.              | `face_ids.json`                     |
+| `FACE_DB_THRESHOLD`    | Maximum distance for a positive match.            | `0.6`                               |
+| `MAX_UPLOAD_SIZE_MB`   | Maximum size for uploaded files (in MB).          | `50`                                |
+| `HOST`                 | Host address to bind the server to.               | `0.0.0.0`                           |
+| `PORT`                 | Port to run the server on.                        | `8000`                              |
+
+---
+
+## Usage
+
+### Running Locally
+
+To start the development server, use the following command:
+
 ```bash
-uvicorn face_service:app --host 0.0.0.0 --port 8000
+uvicorn face_service:app --host $HOST --port $PORT
 ```
-Server sẽ chạy tại `http://localhost:8000`.
 
-## Hướng dẫn sử dụng API
+---
 
-Bạn có thể sử dụng các công cụ như `curl` hoặc Postman để tương tác với API.
+## Deployment
 
-### Đăng ký (`/register`)
+### Docker
 
-- **Endpoint**: `POST /register`
-- **Mô tả**: Đăng ký một `user_id` mới với một hoặc nhiều ảnh.
-- **Parameters** (`multipart/form-data`):
-  - `user_id` (str): ID định danh cho người dùng.
-  - `files` (List[UploadFile]): Một hoặc nhiều file ảnh.
-  - `landmarks` (str): Một chuỗi JSON chứa danh sách các mốc khuôn mặt (landmarks) cho mỗi ảnh. Mỗi landmark là một danh sách 5 cặp tọa độ `[x, y]` đã được chuẩn hóa (giá trị từ 0 đến 1).
+Build and run the container using the provided `Dockerfile`.
 
-**Ví dụ với `curl`:**
+```bash
+# 1. Build the image
+docker build -t face-recognition-api .
+
+# 2. Run the container
+docker run -d -p 8000:8000 --name face-api face-recognition-api
+```
+
+### Docker Compose (Recommended)
+
+For a more robust setup, use the provided `docker-compose.yml` file. This simplifies management and configuration.
+
+```bash
+# Build and start the services in detached mode
+docker-compose up --build -d
+
+# Stop and remove the services
+docker-compose down
+```
+
+### Template for a Master Docker Compose
+
+To integrate this service into a larger microservices architecture, add the following to your main `docker-compose.yml` file.
+
+```yaml
+# --- In your master docker-compose.yml ---
+
+services:
+  # ... other services
+
+  # --- Face Recognition API Service ---
+  face-api:
+    build:
+      context: /path/to/your/face-recognition-project # <-- EDIT: Path to this project
+    container_name: face-api
+    restart: unless-stopped
+    volumes:
+      # Mount models directory from the host to avoid rebuilding
+      - /path/to/your/face-recognition-project/models:/app/models # <-- EDIT: Path to models
+    networks:
+      - your_shared_network # <-- EDIT: Connect to your existing shared network
+    environment:
+      - FACE_DB_THRESHOLD=0.5
+      - MAX_UPLOAD_SIZE_MB=100
+    # If not using a reverse proxy, expose the port:
+    # ports:
+    #   - "8000:8000"
+
+# --- Add this to your top-level networks definition ---
+# networks:
+#   your_shared_network:
+#     external: true
+```
+
+---
+
+## API Endpoints
+
+### `POST /register`
+
+Registers a user by associating a `user_id` with one or more face images.
+
+**`curl` Example:**
 ```bash
 curl -X POST "http://localhost:8000/register" \
 -F "user_id=user_01" \
 -F "files=@/path/to/image1.jpg" \
 -F "files=@/path/to/image2.png" \
--F 'landmarks=[[[0.38, 0.51], [0.73, 0.51], [0.56, 0.71], [0.41, 0.92], [0.70, 0.92]], [[0.39, 0.52], [0.74, 0.52], [0.57, 0.72], [0.42, 0.93], [0.71, 0.93]]]' 
+-F 'landmarks=[[[0.38, 0.51], ...], [[0.39, 0.52], ...]]' 
 ```
 
-### Nhận dạng (`/recognize`)
+### `POST /recognize`
 
-- **Endpoint**: `POST /recognize`
-- **Mô tả**: Nhận dạng một người từ một ảnh.
-- **Parameters** (`multipart/form-data`):
-  - `file` (UploadFile): Một file ảnh.
-  - `landmarks` (str): Một chuỗi JSON chứa các mốc khuôn mặt cho ảnh.
+Recognizes a person from a single image against the database.
 
-**Ví dụ với `curl`:**
+**`curl` Example:**
 ```bash
 curl -X POST "http://localhost:8000/recognize" \
 -F "file=@/path/to/unknown_person.jpg" \
--F 'landmarks=[[0.38, 0.51], [0.73, 0.51], [0.56, 0.71], [0.41, 0.92], [0.70, 0.92]]'
+-F 'landmarks=[[0.38, 0.51], ...]' 
 ```
 
-- **Kết quả thành công**:
-  ```json
-  {
-    "user_id": "user_01",
-    "distance": 0.2345
-  }
-  ```
-- **Kết quả không tìm thấy**:
-  ```json
-  {
-    "user_id": null,
-    "distance": null
-  }
-  ```
+- **Success Response**: `{"user_id": "user_01", "distance": 0.2345}`
+- **Not Found Response**: `{"user_id": null, "distance": null}`
 
-## Triển khai với Docker
+---
 
-Bạn cũng có thể chạy ứng dụng trong một môi trường container hóa bằng Docker.
+## Contributing
 
-### 1. Chuẩn bị
-- Đảm bảo bạn đã cài đặt Docker trên máy.
-- Đảm bảo bạn đã tải các file mô hình và đặt chúng vào thư mục `models/AuraFace-v1/`. Dockerfile sẽ sao chép thư mục này vào image.
+Contributions are welcome! Please feel free to submit a pull request or open an issue to discuss your ideas.
 
-### 2. Build Docker Image
-Mở terminal trong thư mục gốc của dự án và chạy lệnh sau để build image:
-```bash
-docker build -t face-recognition-api .
-```
+1. Fork the repository.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
 
-### 3. Run Docker Container
-Sau khi build thành công, chạy container từ image bạn vừa tạo:
-```bash
-docker run -d -p 8000:8000 --name face-api face-recognition-api
-```
-API sẽ có thể truy cập được tại `http://localhost:8000`.
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
