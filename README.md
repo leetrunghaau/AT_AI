@@ -120,4 +120,23 @@ curl -X POST "http://localhost:8000/recognize" \
   }
   ```
 
+## Triển khai với Docker
+
+Bạn cũng có thể chạy ứng dụng trong một môi trường container hóa bằng Docker.
+
+### 1. Chuẩn bị
+- Đảm bảo bạn đã cài đặt Docker trên máy.
+- Đảm bảo bạn đã tải các file mô hình và đặt chúng vào thư mục `models/AuraFace-v1/`. Dockerfile sẽ sao chép thư mục này vào image.
+
+### 2. Build Docker Image
+Mở terminal trong thư mục gốc của dự án và chạy lệnh sau để build image:
+```bash
+docker build -t face-recognition-api .
 ```
+
+### 3. Run Docker Container
+Sau khi build thành công, chạy container từ image bạn vừa tạo:
+```bash
+docker run -d -p 8000:8000 --name face-api face-recognition-api
+```
+API sẽ có thể truy cập được tại `http://localhost:8000`.
